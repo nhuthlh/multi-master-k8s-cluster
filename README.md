@@ -372,6 +372,15 @@ daemonset.apps/calico-node created
 deployment.apps/calico-kube-controllers created
 ```
 
+```
+root@loadbalancer:~/.kube# kubectl get nodes 
+NAME      STATUS   ROLES           AGE   VERSION
+master1   Ready    control-plane   22m   v1.24.0
+master2   Ready    control-plane   18m   v1.24.0
+worker1   Ready    <none>          15m   v1.24.0
+worker2   Ready    <none>          14m   v1.24.0
+```
+
 # Install kubeadm,kubelet and docker on master and worker nodes
 
 In this step we will install kubelet and kubeadm on the below nodes
