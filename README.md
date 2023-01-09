@@ -2,9 +2,9 @@
 
 https://github.com/hub-kubernetes/kubeadm-multi-master-setup
 
-2 machines for master, ubuntu 20.04+
+3 machines for master, ubuntu 20.04+
 
-2 machines for worker, ubuntu 20.04+
+1 machine for worker, ubuntu 20.04+
 
 1 machine for loadbalancer, ubuntu 20.04+
 
@@ -20,27 +20,27 @@ ssh access can be given to any account. ssh through root is not mandatory
 # Load Balancer
 
 Update your repository and your system
-
+```
 sudo apt-get update && sudo apt-get upgrade -y
-
+```
 Install haproxy
-
+```
 sudo apt-get install haproxy -y
-
+```
 Edit haproxy configuration
-
+```
 vi /etc/haproxy/haproxy.cfg
-
+```
 Add the below lines to create a frontend configuration for loadbalancer -
-
+```
 frontend fe-apiserver
    bind 0.0.0.0:6443
    mode tcp
    option tcplog
    default_backend be-apiserver
-   
+```
 Add the below lines to create a backend configuration for master1 and master2 nodes at port 6443. Note : 6443 is the default port of kube-apiserver
-
+```
 backend be-apiserver
    mode tcp
    option tcplog
@@ -50,25 +50,27 @@ backend be-apiserver
 
        server master1 172.31.38.35:6443 check
        server master2 172.31.34.171:6443 check
-
-Here - master1 and master2 are the names of the master nodes and 172.31.38.35 and 172.31.34.171 are the corresponding internal IP addresses.
+       server master3 172.31.44.102:6443 check
+```
+Here - master1, master2 and master3 are the names of the master nodes and 172.31.38.35, 172.31.34.171 and 172.31.44.102 are the corresponding internal IP addresses.
 
 Restart and Verify haproxy
-
+```
 systemctl restart haproxy
-
 systemctl status haproxy
+```
 
-Ensure haproxy is in running status.
-
-Run nc command as below -
-
+Ensure haproxy is in running status. Run nc command as below -
+```
 nc -v localhost 6443
 
 Connection to localhost 6443 port [tcp/*] succeeded!
+```
 
+# setup nodes
 
-# setup node
+### Run the below commands on all nodes: masters and workers
+
 ```
 #Create configuration file for containerd:
 cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
@@ -128,9 +130,13 @@ sudo apt-get install -y kubelet=1.24.0-00 kubeadm=1.24.0-00 kubectl=1.24.0-00
 #Turn off automatic updates:
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
+
+### Init the cluster from a master node
+
 ```
 kubeadm init --control-plane-endpoint "172.31.47.221:6443" --upload-certs --pod-network-cidr=192.168.0.0/16 
 ```
+
 ```
 root@master1:~# kubeadm init --control-plane-endpoint "172.31.47.221:6443" --upload-certs --pod-network-cidr=192.168.0.0/16 
 I0108 16:29:59.642787    8332 version.go:255] remote version is much newer: v1.26.0; falling back to: stable-1.24
@@ -220,7 +226,10 @@ kubeadm join 172.31.47.221:6443 --token vo62r9.lye9nddz8wxf0r3c \
 root@master1:~# 
 ```
 
+### R
 
+
+### Join the other master nodes to the cluster
 
 ```
 cloud_user@master2:~$ sudo su -
@@ -285,6 +294,8 @@ To start administering your cluster from this node, you need to run the followin
 
 Run 'kubectl get nodes' to see this node join the cluster.
 ```
+
+### Join the worker nodes to the cluster
 
 ```
 cloud_user@worker1:~$ sudo su -
